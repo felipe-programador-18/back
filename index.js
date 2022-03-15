@@ -2,26 +2,28 @@ const express= require('express')
 const api = express()
 const port = process.env.Port || 3000
 const path = require('path')
-const bodyParser = require('body-parser')
+
 const session = require('express-session')
+const bodyParser = require('body-parser')
 
 const mongo = process.env.MONGODB || 'mongodb://localhost/catalogo'
 const mongoose= require('mongoose')
 mongoose.Promise = global.Promise 
-const User = require('./models/user')
-const produtos = require('./routes/produtos')
+//const User = require('./models/user')
 
-api.use(bodyParser.urlencoded({extended:true}))
+const produtos = require('./routes/produtos')
+const login = require('./routes/login')
+
+
 api.use(session({secret:"testando se esta logado"}))
 
 api.set('views', path.join(__dirname, 'views'))
 api.set('view engine','ejs')
 api.use(express.static(path.join( __dirname ,'views')))
-
+api.use(bodyParser.urlencoded({extended:true}))
 
 
 api.get('/', (req, res) =>{res.render('home')})
-
 api.get('/produtos',(req,res, next ) => { 
   res.redirect('/')
   if('user' in session){
@@ -31,10 +33,22 @@ api.get('/produtos',(req,res, next ) => {
 })
 
 const User = require('./models/user')
-api.post('/', (req,res) => {
-
+api.post('/login', async (req,res) => {
+ const user = await User.findOne({
+     username : req.body.username
+ }) 
+ res.send(user)
 })
+api.get('/login', (req, res) =>{res.render('login')})
+api.get('/login',(req,res ) => { 
+    //res.redirect('/')
+    //if('user' in session){
+     // return next()  
+   // }
+    res.render('login')
+  })
 
+api.use('/login', login)
 api.use('/produtos',produtos)
 
 const CreateInitialuser =  async() => {
